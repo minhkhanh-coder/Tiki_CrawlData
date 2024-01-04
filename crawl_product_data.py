@@ -74,15 +74,13 @@ def parser_product(json):
     d['price'] = json.get('price')
     d['rating_average'] = json.get('rating_average')
     d['review_count'] = json.get('review_count')
-    d['sku'] = json.get('sku')
-    d['short_url'] = json.get('short_url')
-    d['inventory_status'] = json.get('inventory_status')
     d['stock_item_qty'] = json.get('stock_item').get('qty')
     d['stock_item_max_sale_qty'] = json.get('stock_item').get('max_sale_qty')
+    d['short_url'] = json.get('short_url')
     return d
 
 
-df_id = pd.read_csv('product_id_ncds.csv')
+df_id = pd.read_csv('crawl_product_id.csv')
 p_ids = df_id.id.to_list()
 print(p_ids)
 result = []
@@ -93,4 +91,4 @@ for pid in tqdm(p_ids, total=len(p_ids)):
         result.append(parser_product(response.json()))
     # time.sleep(random.randrange(3, 5))
 df_product = pd.DataFrame(result)
-df_product.to_csv('crawled_data_ncds.csv', index=False)
+df_product.to_csv('crawl_product_data.csv', index=False)

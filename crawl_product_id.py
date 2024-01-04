@@ -25,14 +25,14 @@ params = {
 }
 
 product_id = []
-for i in range(1, 4):
+for i in range(1, 11):
     params['page'] = i
     response = requests.get('https://tiki.vn/api/v2/products', headers=headers, params=params)#, cookies=cookies)
     if response.status_code == 200:
-        print('request success!!!')
+        print('Request success!!!')
         for record in response.json().get('data'):
             product_id.append({'id': record.get('id')})
     time.sleep(random.randrange(3, 10))
 
 df = pd.DataFrame(product_id)
-df.to_csv('product_id_ncds.csv', index=False)
+df.to_csv('crawl_product_id.csv', index=False)

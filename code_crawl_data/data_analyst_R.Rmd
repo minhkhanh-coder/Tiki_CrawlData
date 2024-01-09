@@ -1,0 +1,234 @@
+# Nhập thư viện
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+# Thông tin tập dữ liệu
+
+```{r}
+# Hiển thị thư mục llàm việc mặc định
+getwd()
+```
+
+```{r}
+# Nhập tập dữ liệu
+df <- read.csv("C:/Users/Karrot/Documents/Đại học/Năm 2/Crawl Data - R/tiki_crawldata/crawl_product_data.csv")
+```
+
+```{r}
+# Trả về số hàng và số cột
+dim(df)
+```
+
+```{r}
+# Trả về tên các cột
+names(df)
+```
+
+# Tiền xử lý dữ liệu
+
+```{r}
+library(dplyr)
+
+# Tạo một data frame mẫu
+
+
+
+df <- df %>% select(-brand_id, -product_name, -stock_item_qty, -stock_item_max_sale_qty, -short_url)
+
+# In kết quả
+names(df)
+```
+
+```{r}
+# Tìm các dòng bị trùng lặp trong DataFrame
+row_duplicated <- df[duplicated(df), ]
+
+# Hiển thị DataFrame chứa các dòng bị trùng lặp
+print(row_duplicated)
+```
+
+```{r}
+# Loại bỏ các dòng trùng lặp, giữ lại dòng đầu tiên xuất hiện
+df <- unique(df)
+
+# Hiển thị lại DataFrame không chứa dòng trùng lặp
+print(df)
+```
+
+```{r}
+# Xử lý giá trị NaN ("Root")
+df <- df[!(df$categories == "Root"), ]
+df
+```
+
+# Thống kê mô tả
+
+```{r}
+# Hiển thị cấu trúc dữ liệu
+summary(df)
+```
+
+# Trực quan hóa dữ liệu
+
+```{r}
+ggplot(df, aes(x = categories)) +
+  geom_bar() +
+  labs(title = "Biểu đồ cột: categories", x = "Categories", y = "Số lượng") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+    plot.title = element_text(hjust = 0.5)  # Đặt title ở giữa
+  )
+```
+
+```{r}
+# Lọc dữ liệu theo yêu cầu
+ao <- nrow(df %>%filter(grepl("áo", categories, ignore.case = TRUE)))
+quan <- nrow(df %>%filter(grepl("quần", categories, ignore.case = TRUE)))
+khac <- nrow(df %>%filter(!grepl("áo", categories, ignore.case = TRUE) & !grepl("quần", categories, ignore.case = TRUE)))
+
+data <- data.frame(
+  category = c("Áo", "Quần", "Khác"),
+  count = c(ao, quan, khac)
+)
+
+# Tính tổng số lượng
+total_count <- sum(data$count)
+
+# Tính phần trăm
+data$percentage <- (data$count / total_count) * 100
+
+# Biểu đồ tròn thể hiện tỉ lệ và thêm phần trăm, xóa số 100, 200, 300 ngoài vòng tròn
+ggplot(data, aes(x = "", y = count, fill = category)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = sprintf("%.1f%%", percentage)), position = position_stack(vjust = 0.5)) +
+  coord_polar("y") +
+  labs(title = "Biểu đồ tròn tỉ lệ giữa Áo, Quần và Khác", fill = "Chú thích", x = "Tỉ lệ (%)") +
+  theme_minimal() +
+  theme(legend.position = "bottom", axis.text = element_blank())
+```
+
+```{r}
+ggplot(df, aes(x = list_price)) +
+  geom_histogram(bins = 30, fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Price", x = "List Price", y = "Frequency")
+```
+
+# Phần 3
+
+# Chứng minh giả thuyết(Hypothesis Testing)
+
+```{r}
+# Kiểm định t về sự khác biệt giữa giá trị trung bình của price đối với OEM và LADOS
+t_test_result <- t.test(df$price[df$brand_name == "OEM"], df$price[df$brand_name == "LADOS"])
+
+# Hiển thị kết quả
+print(t_test_result)
+```
+
+```{r}
+# Kiểm tra giả thuyết null
+if (t_test_result$p.value < 0.05) {
+  print("Bác bỏ giả thuyết null: Có sự khác biệt đáng kể giữa OEM và LADOS")
+} else {
+  print("Chấp nhận giả thuyết null: Không có sự khác biệt đáng kể giữa OEM và LADOS")
+}
+```
+
+# Linear
+
+```{r}
+# Mô hình hồi quy tuyến tính
+model_lm <- lm(price ~ discount + discount_rate + list_price + rating_average, data = df)
+
+# Hiển thị tóm tắt mô hình
+summary(model_lm)
+```
+
+```{r}
+# Vẽ biểu đồ scatterplot với đường hồi quy
+library(ggplot2)
+ggplot(df, aes(x = list_price, y = price)) +
+  geom_point(color = "blue", size = 3) +
+  geom_smooth(method = "lm", se = FALSE, color = "red", formula = y ~ x) +
+  labs(title = "Linear Regression", x = "List Price", y = "Price") +
+  theme_minimal()
+```
+
+# GLM
+
+```{r}
+# Mô hình GLM với phân phối Poisson
+model_glm <- glm(price ~ discount + discount_rate + list_price + rating_average, data = df, family = poisson)
+
+# Hiển thị tóm tắt mô hình
+summary(model_glm)
+```
+
+```{r}
+# Mô hình GLM với phân phối Poisson
+model_glm <- glm(price ~ discount + discount_rate + list_price + rating_average, data = df, family = poisson)
+
+# Dự đoán giá trị
+df$predicted_price <- predict(model_glm, type = "response")
+
+# Vẽ biểu đồ so sánh giữa giá trị dự đoán và giá trị thực tế
+library(ggplot2)
+ggplot(df, aes(x = id, y = price)) +
+  geom_point(color = "blue", size = 3) +
+  geom_line(aes(y = predicted_price), color = "red", size = 1) +
+  labs(title = "Comparison of Predicted and Actual Prices", x = "ID", y = "Price") +
+  theme_minimal()
+```
+
+# K-Means CLustering
+
+```{r}
+# K-Means Clustering
+model_kmeans <- kmeans(df[, c("discount", "discount_rate", "list_price", "rating_average")], centers = 3)
+
+# Hiển thị kết quả
+print(model_kmeans)
+```
+
+```{r}
+# K-Means Clustering
+model_kmeans <- kmeans(df[, c("discount", "discount_rate", "list_price", "rating_average")], centers = 3)
+
+# Thêm thông tin phân cụm vào dữ liệu
+df$cluster <- as.factor(model_kmeans$cluster)
+
+# Vẽ biểu đồ scatterplot
+library(ggplot2)
+ggplot(df, aes(x = discount, y = discount_rate, color = cluster)) +
+  geom_point() +
+  labs(title = "K-Means Clustering", x = "Discount", y = "Discount Rate") +
+  scale_color_manual(values = c("blue", "green", "red"))
+```
+
+# PCA
+
+```{r}
+# Lựa chọn các biến số cần tham gia vào PCA
+df_pca <- df[, c("discount", "list_price", "price")]
+
+# Chuẩn bị dữ liệu cho PCA (loại bỏ các cột không phải dạng số và xử lý missing data)
+df_pca <- na.omit(df_pca)
+df_pca_scaled <- scale(df_pca)  # Chuẩn hóa dữ liệu
+```
+
+```{r}
+# Thực hiện PCA
+pca_result <- prcomp(df_pca_scaled)
+
+# Hiển thị kết quả
+print(summary(pca_result))
+```
+
+```{r}
+# Biểu đồ các thành phần chính
+biplot(pca_result, scale = 0)
+```

@@ -27,7 +27,7 @@ params = {
 product_id = []
 for i in range(1, 11):
     params['page'] = i
-    response = requests.get('https://tiki.vn/api/v2/products', headers=headers, params=params)#, cookies=cookies)
+    response = requests.get('https://tiki.vn/api/personalish/v1/blocks/listings', headers=headers, params=params)#, cookies=cookies)
     if response.status_code == 200:
         print('Request success!!!')
         for record in response.json().get('data'):

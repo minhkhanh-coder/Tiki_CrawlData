@@ -87,7 +87,7 @@ result = []
 for pid in tqdm(p_ids, total=len(p_ids)):
     response = requests.get('https://tiki.vn/api/v2/products/{}'.format(pid), headers=headers, params=params, cookies=cookies)
     if response.status_code == 200:
-        print('Crawl data {} success !!!'.format(pid))
+        print('\nCrawl data {} success !!!'.format(pid))
         result.append(parser_product(response.json()))
     # time.sleep(random.randrange(3, 5))
 df_product = pd.DataFrame(result)
